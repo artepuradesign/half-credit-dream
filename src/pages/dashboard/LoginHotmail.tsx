@@ -557,8 +557,13 @@ const LoginHotmail = () => {
                           <div className="h-8 w-8 sm:h-10 sm:w-10 rounded-full bg-blue-500/10 flex items-center justify-center flex-shrink-0">
                             <Mail className="h-4 w-4 sm:h-5 sm:w-5 text-blue-500" />
                           </div>
+                          {login.status && (
+                            <Badge className="bg-green-600 text-white border-0 text-xs capitalize">
+                              {login.status}
+                            </Badge>
+                          )}
                         </div>
-                        <div className="flex gap-0.5 flex-shrink-0">
+                        <div className="flex items-center gap-1 flex-shrink-0">
                           {isAdmin && (
                             <>
                               <Button size="icon" variant="ghost" className="h-6 w-6 sm:h-7 sm:w-7" onClick={(e) => { e.stopPropagation(); handleOpenEdit(login); }}>
@@ -569,6 +574,14 @@ const LoginHotmail = () => {
                               </Button>
                             </>
                           )}
+                          <Button
+                            size="sm"
+                            className="h-8 w-8 sm:h-9 sm:w-9 rounded-full p-0"
+                            onClick={(e) => { e.stopPropagation(); toggleLoginSelection(login.id); if (!isSelected) { setSelectedLogins(new Set([login.id])); setShowConfirmModal(true); } }}
+                            title="Comprar"
+                          >
+                            <ShoppingCart className="h-4 w-4 sm:h-5 sm:w-5" />
+                          </Button>
                         </div>
                       </div>
                       <div className="flex items-center gap-2 bg-muted/50 rounded-md p-1.5 sm:p-2">
@@ -590,23 +603,6 @@ const LoginHotmail = () => {
                           </div>
                         </div>
                       )}
-                        <div className="flex items-center justify-between gap-1">
-                        <div className="flex items-center gap-1.5">
-                          {login.status && (
-                            <Badge className="bg-green-600 text-white border-0 text-xs capitalize">
-                              {login.status}
-                            </Badge>
-                          )}
-                        </div>
-                        <Button
-                          size="sm"
-                          className="h-7 text-xs px-2.5"
-                          onClick={(e) => { e.stopPropagation(); toggleLoginSelection(login.id); if (!isSelected) { setSelectedLogins(new Set([login.id])); setShowConfirmModal(true); } }}
-                        >
-                          <ShoppingCart className="h-3 w-3 mr-1" />
-                          Comprar
-                        </Button>
-                      </div>
                     </CardContent>
                   </Card>
                 );
