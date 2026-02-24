@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Slider } from '@/components/ui/slider';
 import { Mail, ShoppingCart, CheckCircle, Loader2, AlertCircle, Clock, Pencil, Trash2, Plus, Eye, EyeOff, Copy } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/AuthContext';
@@ -91,6 +92,7 @@ const LoginHotmail = () => {
   const [isPurchasing, setIsPurchasing] = useState(false);
   const [visiblePasswords, setVisiblePasswords] = useState<Set<number>>(new Set());
   const [visibleCompras, setVisibleCompras] = useState<Set<number>>(new Set());
+  const [desiredQuantity, setDesiredQuantity] = useState(1);
 
   // Admin modals
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -172,6 +174,26 @@ const LoginHotmail = () => {
       toast.error('Selecione pelo menos um login para comprar.');
       return;
     }
+    setShowConfirmModal(true);
+  };
+
+  const handleQuantityPurchase = () => {
+    if (desiredQuantity <= 0) {
+      toast.error('Selecione pelo menos 1 email.');
+      return;
+    }
+    if (desiredQuantity > availableLogins.length) {
+      toast.error(`Apenas ${availableLogins.length} email(s) disponível(is).`);
+      return;
+    }
+    const totalCost = desiredQuantity * finalPrice;
+    if (totalBalance < totalCost) {
+      toast.error('Saldo insuficiente para esta compra.');
+      return;
+    }
+    // Auto-select the first N available logins
+    const selected = new Set(availableLogins.slice(0, desiredQuantity).map(l => l.id));
+    setSelectedLogins(selected);
     setShowConfirmModal(true);
   };
 
@@ -452,74 +474,111 @@ const LoginHotmail = () => {
         }
       />
 
-      {/* Card de Preço do Módulo com Desconto */}
-      {modulePrice > 0 && (
-        <div className="relative bg-gradient-to-br from-purple-50/50 via-white to-blue-50/30 dark:from-gray-800/50 dark:via-gray-800 dark:to-purple-900/20 rounded-lg border border-purple-100/50 dark:border-purple-800/30 shadow-sm transition-all duration-300">
-          {hasDiscount && (
-            <div className="absolute -top-2 left-1/2 transform -translate-x-1/2 z-10 pointer-events-none">
-              <Badge className="bg-gradient-to-r from-green-500 to-emerald-500 text-white border-0 px-2.5 py-1 text-xs font-bold shadow-lg">
-                {discount}% OFF
-              </Badge>
-            </div>
-          )}
-          <div className="relative p-3 sm:p-4">
-            <div className="flex items-center justify-between gap-3">
-              <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                <div className="w-1 h-10 bg-gradient-to-b from-purple-500 to-blue-500 rounded-full flex-shrink-0" />
-                <div className="min-w-0">
-                  <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide mb-0.5">
-                    Plano Ativo
-                  </p>
-                  <h3 className="text-sm sm:text-base font-bold text-foreground truncate">
-                    {hasActiveSubscription ? subscription?.plan_name : userPlan}
-                  </h3>
+      {/* Card de Compra - Estilo Consulta CPF */}
+      <Card className="bg-card border-border">
+        <CardHeader className="pb-4">
+          {/* Price Display */}
+          <div className="relative bg-gradient-to-br from-purple-50/50 via-white to-blue-50/30 dark:from-gray-800/50 dark:via-gray-800 dark:to-purple-900/20 rounded-lg border border-purple-100/50 dark:border-purple-800/30 shadow-sm transition-all duration-300">
+            {hasDiscount && (
+              <div className="absolute -top-2 left-1/2 transform -translate-x-1/2 z-10 pointer-events-none">
+                <Badge className="bg-gradient-to-r from-green-500 to-emerald-500 text-white border-0 px-2.5 py-1 text-xs font-bold shadow-lg">
+                  {discount}% OFF
+                </Badge>
+              </div>
+            )}
+            <div className="relative p-3.5 sm:p-4">
+              <div className="flex items-center justify-between gap-4">
+                <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                  <div className="w-1 h-10 bg-gradient-to-b from-purple-500 to-blue-500 rounded-full flex-shrink-0" />
+                  <div className="min-w-0">
+                    <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide mb-0.5">
+                      Plano Ativo
+                    </p>
+                    <h3 className="text-sm sm:text-base font-bold text-foreground truncate">
+                      {hasActiveSubscription ? subscription?.plan_name : userPlan}
+                    </h3>
+                  </div>
+                </div>
+                <div className="flex flex-col items-end gap-0.5 flex-shrink-0">
+                  {hasDiscount && (
+                    <span className="text-[10px] sm:text-xs text-muted-foreground line-through">
+                      R$ {originalPrice.toFixed(2)}
+                    </span>
+                  )}
+                  <span className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 dark:from-purple-400 dark:to-blue-400 bg-clip-text text-transparent whitespace-nowrap">
+                    R$ {finalPrice.toFixed(2)}
+                    <span className="text-xs font-normal text-muted-foreground ml-1">/un</span>
+                  </span>
                 </div>
               </div>
-              <div className="flex flex-col items-end gap-0.5 flex-shrink-0">
-                {hasDiscount && (
-                  <span className="text-[10px] sm:text-xs text-muted-foreground line-through">
-                    R$ {originalPrice.toFixed(2)}
-                  </span>
-                )}
-                <span className="text-lg sm:text-2xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 dark:from-purple-400 dark:to-blue-400 bg-clip-text text-transparent whitespace-nowrap">
-                  R$ {finalPrice.toFixed(2)}
-                </span>
-              </div>
             </div>
           </div>
-        </div>
-      )}
+        </CardHeader>
 
-      {/* Barra de compra em lote */}
-      {selectedCount > 0 && (
-        <div className="sticky top-0 z-20 bg-primary/10 border border-primary/20 rounded-lg p-3 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
-          <div className="flex items-center gap-2 text-sm">
-            <ShoppingCart className="h-4 w-4 text-primary" />
-            <span className="font-medium text-foreground">
-              {selectedCount} selecionado(s) · Total: <strong>{formatPrice(totalPurchasePrice)}</strong>
+        <CardContent className="space-y-4">
+          {/* Disponíveis */}
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-muted-foreground">Disponíveis para compra:</span>
+            <Badge variant="outline" className="text-sm font-semibold">
+              {availableLogins.length} email(s)
+            </Badge>
+          </div>
+
+          {/* Quantidade - Input + Slider */}
+          <div className="space-y-3">
+            <Label htmlFor="quantity" className="text-sm">Quantidade de emails</Label>
+            <div className="flex items-center gap-3">
+              <Input
+                id="quantity"
+                type="number"
+                inputMode="numeric"
+                min={1}
+                max={availableLogins.length || 1}
+                value={desiredQuantity}
+                onChange={(e) => {
+                  const val = parseInt(e.target.value) || 0;
+                  setDesiredQuantity(Math.min(Math.max(val, 0), availableLogins.length || 1));
+                }}
+                className="w-20 text-center font-semibold text-lg"
+              />
+              <Slider
+                value={[desiredQuantity]}
+                onValueChange={(v) => setDesiredQuantity(v[0])}
+                min={1}
+                max={Math.max(availableLogins.length, 1)}
+                step={1}
+                className="flex-1"
+              />
+            </div>
+          </div>
+
+          {/* Total */}
+          <div className="flex items-center justify-between bg-muted/50 rounded-lg p-3">
+            <span className="text-sm font-medium text-muted-foreground">Total:</span>
+            <span className="text-lg font-bold text-foreground">
+              {formatPrice(desiredQuantity * finalPrice)}
             </span>
           </div>
-          <div className="flex gap-2 w-full sm:w-auto">
-            <Button
-              variant="outline"
-              size="sm"
-              className="flex-1 sm:flex-none text-xs"
-              onClick={() => setSelectedLogins(new Set())}
-            >
-              Limpar
-            </Button>
-            <Button
-              size="sm"
-              className="flex-1 sm:flex-none text-xs"
-              onClick={handleBulkPurchase}
-              disabled={totalBalance < totalPurchasePrice}
-            >
-              <ShoppingCart className="h-3.5 w-3.5 mr-1" />
-              Comprar Selecionados
-            </Button>
-          </div>
-        </div>
-      )}
+
+          {/* Botão Realizar Compra */}
+          <Button
+            onClick={handleQuantityPurchase}
+            disabled={loading || desiredQuantity <= 0 || availableLogins.length === 0 || totalBalance < desiredQuantity * finalPrice}
+            className="w-full"
+            size="lg"
+          >
+            <ShoppingCart className="mr-2 h-4 w-4" />
+            Realizar Compra
+          </Button>
+
+          {totalBalance < desiredQuantity * finalPrice && desiredQuantity > 0 && (
+            <div className="flex items-center gap-2 text-destructive bg-destructive/10 p-2 rounded text-xs">
+              <AlertCircle className="h-4 w-4 shrink-0" />
+              <span>Saldo insuficiente. Disponível: {formatPrice(totalBalance)}</span>
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Lista de Logins */}
       {loading ? (
