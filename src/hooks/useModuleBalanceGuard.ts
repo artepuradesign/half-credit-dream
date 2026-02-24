@@ -59,12 +59,13 @@ export const useModuleBalanceGuard = (moduleSlug: string) => {
         hasRecords: userHasRecords
       });
       
+      const remaining = Math.max(finalPrice - totalAvailableBalance, 0.01);
       toast.error(
         `Saldo insuficiente para ${module.title}! Valor necessário: R$ ${finalPrice.toFixed(2)}`,
         {
           action: {
-            label: "Adicionar Saldo",
-            onClick: () => navigate('/dashboard/adicionar-saldo')
+            label: "💰 Depositar",
+            onClick: () => navigate(`/dashboard/adicionar-saldo?valor=${remaining.toFixed(2)}&fromModule=true`)
           }
         }
       );

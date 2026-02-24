@@ -171,6 +171,7 @@ const DashboardHome = () => {
     });
     
     if (totalAvailableBalance < finalPrice) {
+      const remaining = Math.max(finalPrice - totalAvailableBalance, 0.01);
       const priceDisplay = hasDiscount 
         ? `${finalPrice.toFixed(2)} (com ${discountPercentage}% de desconto)`
         : finalPrice.toFixed(2);
@@ -179,8 +180,8 @@ const DashboardHome = () => {
         `Saldo insuficiente para ${moduleName}! Valor necessário: ${priceDisplay}`,
         {
           action: {
-            label: "Adicionar Saldo",
-            onClick: () => navigate('/dashboard/adicionar-saldo')
+            label: "💰 Depositar",
+            onClick: () => navigate(`/dashboard/adicionar-saldo?valor=${remaining.toFixed(2)}&fromModule=true`)
           }
         }
       );

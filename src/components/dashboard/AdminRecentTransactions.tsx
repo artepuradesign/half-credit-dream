@@ -63,6 +63,8 @@ const AdminRecentTransactions: React.FC<AdminRecentTransactionsProps> = ({ recen
       case 'saque': return 'border-l-red-500';
       case 'compra_modulo': return 'border-l-violet-500';
       case 'entrada': return 'border-l-teal-500';
+      case 'consulta': return 'border-l-cyan-500';
+      case 'compra_login': return 'border-l-pink-500';
       default: return 'border-l-gray-500';
     }
   };
@@ -76,6 +78,8 @@ const AdminRecentTransactions: React.FC<AdminRecentTransactionsProps> = ({ recen
       case 'saque': return 'SAQUE';
       case 'compra_modulo': return 'COMPRA DE MÓDULO';
       case 'entrada': return 'ENTRADA';
+      case 'consulta': return 'CONSULTA';
+      case 'compra_login': return 'COMPRA LOGIN';
       default: return type.toUpperCase();
     }
   };
@@ -136,12 +140,12 @@ const AdminRecentTransactions: React.FC<AdminRecentTransactionsProps> = ({ recen
                     <Badge 
                       variant="secondary"
                       className={`text-[10px] sm:text-xs font-semibold px-1.5 sm:px-2 ${
-                        ['recarga', 'plano', 'compra_modulo', 'entrada'].includes(transaction.type) 
+                        ['recarga', 'plano', 'compra_modulo', 'entrada', 'consulta', 'compra_login'].includes(transaction.type) 
                       ? "bg-green-100 text-green-700 dark:bg-green-900/50 dark:text-green-300"
                         : "bg-red-100 text-red-700 dark:bg-red-900/50 dark:text-red-300"
                       }`}
                     >
-                      {['recarga', 'plano', 'compra_modulo', 'entrada'].includes(transaction.type) ? '+' : '-'}
+                      {['recarga', 'plano', 'compra_modulo', 'entrada', 'consulta', 'compra_login'].includes(transaction.type) ? '+' : '-'}
                       {formatCurrency(transaction.amount)}
                     </Badge>
                   </div>

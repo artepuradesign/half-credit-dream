@@ -28,12 +28,13 @@ const PanelNavigation = ({ calculateTotalAvailableBalance, painelId }: PanelNavi
     });
     
     if (totalAvailableBalance < price) {
+      const remaining = Math.max(price - totalAvailableBalance, 0.01);
       toast.error(
         `Saldo insuficiente para ${moduleName}! Valor necessário: R$ ${price.toFixed(2)}`,
         {
           action: {
-            label: "Adicionar Saldo",
-            onClick: () => navigate('/dashboard/adicionar-saldo')
+            label: "💰 Depositar",
+            onClick: () => navigate(`/dashboard/adicionar-saldo?valor=${remaining.toFixed(2)}&fromModule=true`)
           }
         }
       );
