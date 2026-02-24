@@ -105,7 +105,32 @@ class LoginHotmailController {
             $moduleStmt = $this->db->prepare($moduleQuery);
             $moduleStmt->execute();
             $moduleData = $moduleStmt->fetch(PDO::FETCH_ASSOC);
-            $preco = (float)($moduleData['price'] ?? 2.00);
+            $precoOriginal = (float)($moduleData['price'] ?? 2.00);
+
+            // Aplicar desconto do plano do usuário
+            $userPlanQuery = "SELECT tipoplano FROM users WHERE id = ?";
+            $userPlanStmt = $this->db->prepare($userPlanQuery);
+            $userPlanStmt->execute([$userId]);
+            $userPlanData = $userPlanStmt->fetch(PDO::FETCH_ASSOC);
+            $planName = $userPlanData['tipoplano'] ?? 'Pré-Pago';
+
+            $discountMap = [
+                'Pré-Pago' => 0,
+                'Rainha de Ouros' => 5,
+                'Rainha de Paus' => 10,
+                'Rainha de Copas' => 15,
+                'Rainha de Espadas' => 20,
+                'Rei de Ouros' => 20,
+                'Rei de Paus' => 30,
+                'Rei de Copas' => 40,
+                'Rei de Espadas' => 50
+            ];
+
+            $discountPercent = $discountMap[$planName] ?? 0;
+            $descontoValor = ($precoOriginal * $discountPercent) / 100;
+            $preco = round(max($precoOriginal - $descontoValor, 0.01), 2);
+
+            error_log("LOGIN_HOTMAIL: Plano: {$planName}, Desconto: {$discountPercent}%, Original: R$ {$precoOriginal}, Final: R$ {$preco}");
 
             $saldoField = $walletType === 'plan' ? 'saldo_plano' : 'saldo';
             $userQuery = "SELECT saldo, saldo_plano FROM users WHERE id = ?";
@@ -145,9 +170,11 @@ class LoginHotmailController {
                 'source' => 'login-hotmail',
                 'login_id' => $loginId,
                 'provedor' => 'hotmail',
-                'discount' => 0,
-                'original_price' => $preco,
+                'discount' => $discountPercent,
+                'discount_amount' => $descontoValor,
+                'original_price' => $precoOriginal,
                 'final_price' => $preco,
+                'plan_name' => $planName,
                 'module_id' => 162,
                 'timestamp' => date('c'),
                 'saldo_usado' => $saldoUsado,
@@ -159,7 +186,7 @@ class LoginHotmailController {
             $consultationStmt = $this->db->prepare($consultationQuery);
             $consultationStmt->execute([$userId, $login['email'], $preco, $ipAddress, $userAgent, $metadata]);
 
-            $compraId = $this->model->registrarCompra($userId, $loginId, $preco, 0, 'saldo');
+            $compraId = $this->model->registrarCompra($userId, $loginId, $preco, $descontoValor, 'saldo');
 
             // Marcar login como vendido (inativo) para não ser vendido novamente
             $this->model->marcarComoVendido($loginId);
