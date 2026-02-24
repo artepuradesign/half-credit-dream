@@ -631,8 +631,22 @@ const LoginHotmail = () => {
                             <div className="h-8 w-8 sm:h-10 sm:w-10 rounded-full bg-blue-500/10 flex items-center justify-center flex-shrink-0">
                               <Mail className="h-4 w-4 sm:h-5 sm:w-5 text-blue-500" />
                             </div>
+                            <Badge className="bg-green-500/90 text-white border-0 text-xs">
+                              <CheckCircle className="h-3 w-3 mr-0.5" />
+                              Adquirido
+                            </Badge>
                           </div>
-                          <div className="flex gap-0.5 flex-shrink-0">
+                          <div className="flex items-center gap-1.5 flex-shrink-0">
+                            {compra && (
+                              <span className="text-xs text-muted-foreground">
+                                {new Date(compra.created_at).toLocaleDateString('pt-BR')}
+                              </span>
+                            )}
+                            {compra && (
+                              <Badge variant="outline" className="text-xs font-semibold">
+                                {formatPrice(compra.preco_pago)}
+                              </Badge>
+                            )}
                             {isAdmin && (
                               <>
                                 <Button size="icon" variant="ghost" className="h-6 w-6 sm:h-7 sm:w-7" onClick={(e) => { e.stopPropagation(); handleOpenEdit(login); }}>
@@ -644,43 +658,6 @@ const LoginHotmail = () => {
                               </>
                             )}
                           </div>
-                        </div>
-                        <div className="flex items-center gap-2 bg-muted/50 rounded-md p-1.5 sm:p-2">
-                          <span className="text-xs sm:text-sm text-muted-foreground">Email:</span>
-                          <span className="text-sm sm:text-base font-mono flex-1 truncate">{login.email}</span>
-                          <Button size="icon" variant="ghost" className="h-5 w-5 sm:h-6 sm:w-6 flex-shrink-0" onClick={(e) => { e.stopPropagation(); copyToClipboard(login.email, 'Email'); }} title="Copiar email">
-                            <Copy className="h-3 w-3" />
-                          </Button>
-                        </div>
-                        <div className="flex items-center gap-2 bg-muted/50 rounded-md p-1.5 sm:p-2">
-                          <span className="text-xs sm:text-sm text-muted-foreground">Senha:</span>
-                          <span className="text-sm sm:text-base font-mono flex-1 truncate">
-                            {visiblePasswords.has(login.id) ? login.senha : '••••••••'}
-                          </span>
-                          <div className="flex gap-0.5">
-                            <Button size="icon" variant="ghost" className="h-5 w-5 sm:h-6 sm:w-6" onClick={(e) => { e.stopPropagation(); togglePasswordVisibility(login.id); }}>
-                              {visiblePasswords.has(login.id) ? <EyeOff className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
-                            </Button>
-                            <Button size="icon" variant="ghost" className="h-5 w-5 sm:h-6 sm:w-6" onClick={(e) => { e.stopPropagation(); copyToClipboard(login.senha, 'Senha'); }}>
-                              <Copy className="h-3 w-3" />
-                            </Button>
-                          </div>
-                        </div>
-                        <div className="flex items-center flex-wrap gap-1.5">
-                          <Badge className="bg-green-500/90 text-white border-0 text-xs">
-                            <CheckCircle className="h-3 w-3 mr-0.5" />
-                            Adquirido
-                          </Badge>
-                          {compra && (
-                            <Badge variant="outline" className="text-xs">
-                              {formatPrice(compra.preco_pago)}
-                            </Badge>
-                          )}
-                          {compra && (
-                            <span className="text-xs text-muted-foreground">
-                              {new Date(compra.created_at).toLocaleDateString('pt-BR')}
-                            </span>
-                          )}
                         </div>
                       </CardContent>
                     </Card>
