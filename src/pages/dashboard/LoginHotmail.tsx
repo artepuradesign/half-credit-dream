@@ -572,15 +572,15 @@ const LoginHotmail = () => {
                         </div>
                       </div>
                       <div className="flex items-center gap-2 bg-muted/50 rounded-md p-1.5 sm:p-2">
-                        <span className="text-[10px] sm:text-xs text-muted-foreground">Email:</span>
-                        <span className="text-xs sm:text-sm font-mono flex-1 truncate">{login.email}</span>
+                        <span className="text-xs sm:text-sm text-muted-foreground">Email:</span>
+                        <span className="text-sm sm:text-base font-mono flex-1 truncate">{login.email}</span>
                         <Button size="icon" variant="ghost" className="h-5 w-5 sm:h-6 sm:w-6 flex-shrink-0" onClick={(e) => { e.stopPropagation(); copyToClipboard(login.email, 'Email'); }} title="Copiar email">
                           <Copy className="h-3 w-3" />
                         </Button>
                       </div>
                       <div className="flex items-center gap-2 bg-muted/50 rounded-md p-1.5 sm:p-2">
-                        <span className="text-[10px] sm:text-xs text-muted-foreground">Senha:</span>
-                        <span className="text-xs sm:text-sm font-mono flex-1 truncate">••••••••</span>
+                        <span className="text-xs sm:text-sm text-muted-foreground">Senha:</span>
+                        <span className="text-sm sm:text-base font-mono flex-1 truncate">••••••••</span>
                       </div>
                       {isAdmin && login.cpf && (
                         <div className="text-[10px]">
@@ -590,21 +590,17 @@ const LoginHotmail = () => {
                           </div>
                         </div>
                       )}
-                      <div className="flex items-center justify-between gap-1">
+                        <div className="flex items-center justify-between gap-1">
                         <div className="flex items-center gap-1.5">
-                          <Badge variant="outline" className="text-[10px]">
-                            <ShoppingCart className="h-3 w-3 mr-0.5" />
-                            Disponível
-                          </Badge>
                           {login.status && (
-                            <Badge className="bg-green-600 text-white border-0 text-[10px] capitalize">
+                            <Badge className="bg-green-600 text-white border-0 text-xs capitalize">
                               {login.status}
                             </Badge>
                           )}
                         </div>
                         <Button
                           size="sm"
-                          className="h-7 text-[10px] px-2.5"
+                          className="h-7 text-xs px-2.5"
                           onClick={(e) => { e.stopPropagation(); toggleLoginSelection(login.id); if (!isSelected) { setSelectedLogins(new Set([login.id])); setShowConfirmModal(true); } }}
                         >
                           <ShoppingCart className="h-3 w-3 mr-1" />
@@ -654,15 +650,15 @@ const LoginHotmail = () => {
                           </div>
                         </div>
                         <div className="flex items-center gap-2 bg-muted/50 rounded-md p-1.5 sm:p-2">
-                          <span className="text-[10px] sm:text-xs text-muted-foreground">Email:</span>
-                          <span className="text-xs sm:text-sm font-mono flex-1 truncate">{login.email}</span>
+                          <span className="text-xs sm:text-sm text-muted-foreground">Email:</span>
+                          <span className="text-sm sm:text-base font-mono flex-1 truncate">{login.email}</span>
                           <Button size="icon" variant="ghost" className="h-5 w-5 sm:h-6 sm:w-6 flex-shrink-0" onClick={(e) => { e.stopPropagation(); copyToClipboard(login.email, 'Email'); }} title="Copiar email">
                             <Copy className="h-3 w-3" />
                           </Button>
                         </div>
                         <div className="flex items-center gap-2 bg-muted/50 rounded-md p-1.5 sm:p-2">
-                          <span className="text-[10px] sm:text-xs text-muted-foreground">Senha:</span>
-                          <span className="text-xs sm:text-sm font-mono flex-1 truncate">
+                          <span className="text-xs sm:text-sm text-muted-foreground">Senha:</span>
+                          <span className="text-sm sm:text-base font-mono flex-1 truncate">
                             {visiblePasswords.has(login.id) ? login.senha : '••••••••'}
                           </span>
                           <div className="flex gap-0.5">
@@ -675,13 +671,18 @@ const LoginHotmail = () => {
                           </div>
                         </div>
                         <div className="flex items-center flex-wrap gap-1.5">
-                          <Badge className="bg-green-500/90 text-white border-0 text-[10px]">
+                          <Badge className="bg-green-500/90 text-white border-0 text-xs">
                             <CheckCircle className="h-3 w-3 mr-0.5" />
-                            Adquirido {compra ? formatPrice(compra.preco_pago) : ''}
+                            Adquirido
                           </Badge>
                           {compra && (
-                            <span className="text-[10px] text-muted-foreground">
-                              {new Date(compra.created_at).toLocaleDateString('pt-BR')} · {new Date(compra.created_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                            <Badge variant="outline" className="text-xs">
+                              {formatPrice(compra.preco_pago)}
+                            </Badge>
+                          )}
+                          {compra && (
+                            <span className="text-xs text-muted-foreground">
+                              {new Date(compra.created_at).toLocaleDateString('pt-BR')}
                             </span>
                           )}
                         </div>
@@ -718,8 +719,7 @@ const LoginHotmail = () => {
                       <TableCell className="text-xs font-mono truncate max-w-[150px]">{compra.email || '-'}</TableCell>
                       <TableCell className="text-xs font-semibold">{formatPrice(compra.preco_pago)}</TableCell>
                       <TableCell className="text-xs">
-                        <div>{new Date(compra.created_at).toLocaleDateString('pt-BR')}</div>
-                        <div className="text-[10px] text-muted-foreground">{new Date(compra.created_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</div>
+                        {new Date(compra.created_at).toLocaleDateString('pt-BR')}
                       </TableCell>
                     </TableRow>
                   ))}
