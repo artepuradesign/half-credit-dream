@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -11,13 +11,17 @@ import { useUserBalance } from '@/hooks/useUserBalance';
 import { useAuth } from '@/contexts/AuthContext';
 import { useModuleTemplate } from '@/contexts/ModuleTemplateContext';
 import * as Icons from 'lucide-react';
-import { Package, Lock } from 'lucide-react';
+import { Package, Lock, ShoppingCart } from 'lucide-react';
 import EmptyState from '../ui/empty-state';
 import ModuleCardTemplates from '@/components/configuracoes/personalization/ModuleCardTemplates';
 import ModuleGridWrapper from '@/components/configuracoes/personalization/ModuleGridWrapper';
 import { useUserSubscription } from '@/hooks/useUserSubscription';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useModuleRecords } from '@/hooks/useModuleRecords';
+import { usePixPaymentFlow } from '@/hooks/usePixPaymentFlow';
+import { useUserDataApi } from '@/hooks/useUserDataApi';
+import PixQRCodeModal from '@/components/payment/PixQRCodeModal';
+import { API_BASE_URL } from '@/config/apiConfig';
 
 interface PanelsGridProps {
   activePanels: Panel[];
@@ -39,6 +43,11 @@ const PanelsGrid: React.FC<PanelsGridProps> = ({ activePanels }) => {
   const navigate = useNavigate();
   const isMobile = useIsMobile();
   const { hasRecordsInModule } = useModuleRecords();
+  const { userData } = useUserDataApi();
+  const { loading: pixLoading, pixResponse, checkingPayment, createPixPayment, checkPaymentStatus, generateNewPayment } = usePixPaymentFlow();
+  
+  const [showPixModal, setShowPixModal] = useState(false);
+  const [pixModuleAmount, setPixModuleAmount] = useState(0);
   
   // Obter plano atual (subscription > planInfo > fallback em localStorage)
   // Importante: parênteses para evitar precedência incorreta entre `||` e ternário.
@@ -127,6 +136,59 @@ const PanelsGrid: React.FC<PanelsGridProps> = ({ activePanels }) => {
     return `/module/${module.slug}`;
   };
 
+  // Handler para compra direta via PIX no overlay do módulo
+  const handleDirectPurchase = async (e: React.MouseEvent, amount: number) => {
+    e.stopPropagation();
+    const remaining = Math.max(amount - totalAvailableBalance, 0.01);
+    setPixModuleAmount(remaining);
+    
+    const pixData = await createPixPayment(remaining, userData);
+    if (pixData) {
+      setShowPixModal(true);
+    }
+  };
+
+  // Auto-check payment status while PIX modal is open
+  useEffect(() => {
+    if (!showPixModal || !pixResponse?.payment_id) return;
+    let cancelled = false;
+
+    const checkLive = async () => {
+      try {
+        const res = await fetch(
+          `${API_BASE_URL}/mercadopago/check-payment-status-live.php?payment_id=${pixResponse.payment_id}`
+        );
+        if (!res.ok) return;
+        const data = await res.json();
+        const newStatus = data?.data?.status;
+        if (newStatus === 'approved' && !cancelled) {
+          toast.success('🎉 Pagamento Aprovado! Saldo creditado.');
+          setShowPixModal(false);
+          setTimeout(() => window.location.href = '/dashboard', 1500);
+        }
+      } catch (error) {
+        console.error('Erro ao checar status (live):', error);
+      }
+    };
+
+    const interval = setInterval(checkLive, 3000);
+    checkLive();
+    return () => { cancelled = true; clearInterval(interval); };
+  }, [showPixModal, pixResponse?.payment_id]);
+
+  const handlePixPaymentConfirm = async () => {
+    if (!pixResponse?.payment_id) return;
+    toast.loading('Verificando pagamento...', { id: 'checking-pix' });
+    const status = await checkPaymentStatus(pixResponse.payment_id);
+    if (status === 'approved') {
+      toast.success('🎉 Pagamento aprovado!', { id: 'checking-pix' });
+      setShowPixModal(false);
+      setTimeout(() => window.location.href = '/dashboard', 1500);
+    } else {
+      toast.info('⏳ Ainda processando, aguarde...', { id: 'checking-pix' });
+    }
+  };
+
   const handleModuleClick = (module: any) => {
     if (isBalanceLoading || !hasLoadedOnce) {
       toast.info('Verificando saldo...', {
@@ -148,8 +210,6 @@ const PanelsGrid: React.FC<PanelsGridProps> = ({ activePanels }) => {
 
     const shouldApplyDiscountOnClick = effectiveDiscountPercentage > 0 && module.panel_id !== 38;
 
-    // calculateDiscountedPrice do hook usa o desconto atual do usuário (já resolvido pelo hook).
-    // Quando não há assinatura ativa, usamos o fallback pelo plano atual (planUtils) para manter consistência no /dashboard.
     const finalPrice = shouldApplyDiscountOnClick
       ? (hasActiveSubscription
           ? calculateDiscountedPrice(originalPrice, module.panel_id).discountedPrice
@@ -160,12 +220,13 @@ const PanelsGrid: React.FC<PanelsGridProps> = ({ activePanels }) => {
     const userHasRecords = hasRecordsInModule(moduleRoute);
 
     if (totalAvailableBalance < finalPrice && !userHasRecords) {
+      const remaining = Math.max(finalPrice - totalAvailableBalance, 0.01);
       toast.error(
         `Saldo insuficiente para ${module.title}! Valor necessário: R$ ${finalPrice.toFixed(2)}`,
         {
           action: {
-            label: "Adicionar Saldo",
-            onClick: () => navigate('/dashboard/adicionar-saldo')
+            label: "💰 Depositar",
+            onClick: () => navigate(`/dashboard/adicionar-saldo?valor=${remaining.toFixed(2)}&fromModule=true`)
           }
         }
       );
@@ -190,6 +251,7 @@ const PanelsGrid: React.FC<PanelsGridProps> = ({ activePanels }) => {
   }
 
   return (
+    <>
     <div className="space-y-8">
       {activePanels.map((panel) => {
         const PanelIcon = getIconComponent(panel.icon);
@@ -266,13 +328,21 @@ const PanelsGrid: React.FC<PanelsGridProps> = ({ activePanels }) => {
                       />
                       
                       
-                      {/* Overlay para saldo insuficiente - não exibir se usuário já tem registros no módulo */}
+                      {/* Overlay para saldo insuficiente - botão Comprar verde */}
                       {hasLoadedOnce && !isBalanceLoading && totalAvailableBalance < finalDiscountedPrice && !userHasRecordsInThis && (
                         <div className="absolute inset-0 bg-black/60 dark:bg-black/70 rounded-lg z-50 flex items-center justify-center backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                           <div className="text-center text-white bg-black/80 backdrop-blur-sm rounded-lg px-4 py-3 border border-white/20 shadow-2xl w-[85%] max-w-[170px]">
-                            <Lock className="h-6 w-6 mx-auto mb-2 text-white" />
-                            <p className="text-sm font-medium">Saldo Insuficiente</p>
-                            <p className="text-xs text-white/80">R$ {finalDiscountedPrice.toFixed(2)}</p>
+                            <Lock className="h-5 w-5 mx-auto mb-1.5 text-white" />
+                            <p className="text-sm font-medium mb-2">Saldo Insuficiente</p>
+                            <Button
+                              size="sm"
+                              className="bg-green-500 hover:bg-green-600 text-white text-xs font-semibold w-full"
+                              onClick={(e) => handleDirectPurchase(e, finalDiscountedPrice)}
+                              disabled={pixLoading}
+                            >
+                              <ShoppingCart className="h-3.5 w-3.5 mr-1" />
+                              {pixLoading ? 'Gerando...' : 'Comprar'}
+                            </Button>
                           </div>
                         </div>
                       )}
@@ -305,6 +375,18 @@ const PanelsGrid: React.FC<PanelsGridProps> = ({ activePanels }) => {
         );
       })}
     </div>
+
+    {/* Modal PIX para compra direta */}
+    <PixQRCodeModal
+      isOpen={showPixModal}
+      onClose={() => setShowPixModal(false)}
+      amount={pixModuleAmount}
+      onPaymentConfirm={handlePixPaymentConfirm}
+      isProcessing={checkingPayment}
+      pixData={pixResponse}
+      onGenerateNew={() => generateNewPayment(pixModuleAmount, userData)}
+    />
+  </>
   );
 };
 

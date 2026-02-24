@@ -144,16 +144,28 @@ const AdicionarSaldo = () => {
 
   const finalAmount = selectedAmount > 0 ? selectedAmount : parseFloat(customAmount) || 0;
 
-  // Pré-preencher valor da URL
+  // Pré-preencher valor da URL e detectar se veio de um módulo
+  const [fromModule, setFromModule] = useState(false);
+  
   useEffect(() => {
     const searchParams = new URLSearchParams(location.search);
     const valorParam = searchParams.get('valor');
+    const fromModuleParam = searchParams.get('fromModule');
+    
+    if (fromModuleParam === 'true') {
+      setFromModule(true);
+    }
     
     if (valorParam) {
       const valor = parseFloat(valorParam);
       if (!isNaN(valor) && valor > 0) {
         setCustomAmount(valor.toString());
-        toast.success(`Valor R$ ${valor.toFixed(2)} preenchido automaticamente`);
+        setSelectedAmount(0);
+        if (fromModuleParam === 'true') {
+          toast.info(`Valor de R$ ${valor.toFixed(2)} necessário para completar o saldo`);
+        } else {
+          toast.success(`Valor R$ ${valor.toFixed(2)} preenchido automaticamente`);
+        }
       }
     }
   }, [location.search]);
@@ -495,6 +507,7 @@ const AdicionarSaldo = () => {
           canProceed={canProceed}
           isProcessing={loading}
           onPayment={handlePayment}
+          hidePresets={fromModule}
         />
       </div>
 

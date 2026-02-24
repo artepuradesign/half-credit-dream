@@ -16,8 +16,8 @@ const DashboardAdmin = () => {
   
   // Caixa central: recargas, compras de plano e compras de módulos geram saldo
   const recentTransactions = transactions
-    .filter(t => ['recarga', 'plano', 'compra_modulo', 'entrada'].includes(t.type))
-    .slice(0, 10);
+    .filter(t => ['recarga', 'plano', 'compra_modulo', 'entrada', 'consulta', 'compra_login'].includes(t.type))
+    .slice(0, 15);
 
   // Carregar dados iniciais com proteção contra falta de token
   useEffect(() => {

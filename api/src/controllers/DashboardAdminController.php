@@ -860,8 +860,8 @@ class DashboardAdminController {
                 Response::error('Erro ao atualizar usuário', 500);
             }
             
-        } catch (Exception $e) {
-            error_log("DASHBOARD_ADMIN UPDATE_USER ERROR: " . $e->getMessage());
+        } catch (\Throwable $e) {
+            error_log("DASHBOARD_ADMIN UPDATE_USER ERROR: " . $e->getMessage() . " | Trace: " . $e->getTraceAsString());
             Response::error('Erro ao atualizar usuário: ' . $e->getMessage(), 500);
         }
     }
@@ -1074,8 +1074,8 @@ class DashboardAdminController {
                     // Inserir transação diretamente para evitar validação de saldo insuficiente
                     $transactionQuery = "INSERT INTO wallet_transactions (
                         user_id, wallet_type, type, amount, balance_before, balance_after, 
-                        description, reference_type, status, created_at
-                    ) VALUES (?, 'main', ?, ?, ?, ?, ?, 'admin_adjustment', 'completed', NOW())";
+                        description, reference_type, payment_method, status, created_at
+                    ) VALUES (?, 'main', ?, ?, ?, ?, ?, 'admin_adjustment', 'admin', 'completed', NOW())";
                     
                     $stmt = $this->db->prepare($transactionQuery);
                     $stmt->execute([
@@ -1100,8 +1100,8 @@ class DashboardAdminController {
                     
                     $transactionQuery = "INSERT INTO wallet_transactions (
                         user_id, wallet_type, type, amount, balance_before, balance_after, 
-                        description, reference_type, status, created_at
-                    ) VALUES (?, 'plan', ?, ?, ?, ?, ?, 'admin_adjustment', 'completed', NOW())";
+                        description, reference_type, payment_method, status, created_at
+                    ) VALUES (?, 'plan', ?, ?, ?, ?, ?, 'admin_adjustment', 'admin', 'completed', NOW())";
                     
                     $stmt = $this->db->prepare($transactionQuery);
                     $stmt->execute([

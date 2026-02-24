@@ -19,6 +19,7 @@ interface AmountSelectionProps {
   canProceed: () => boolean;
   isProcessing: boolean;
   onPayment: () => void;
+  hidePresets?: boolean;
 }
 
 const AmountSelection: React.FC<AmountSelectionProps> = ({
@@ -32,7 +33,8 @@ const AmountSelection: React.FC<AmountSelectionProps> = ({
   cupomAplicado,
   canProceed,
   isProcessing,
-  onPayment
+  onPayment,
+  hidePresets = false
 }) => {
   const predefinedAmounts = [10, 25, 50, 100, 250, 500];
 
@@ -78,6 +80,7 @@ const AmountSelection: React.FC<AmountSelectionProps> = ({
           </p>
         </div>
         
+        {!hidePresets && (
         <div className="pt-3 sm:pt-4 border-t">
           <Label className="text-xs sm:text-sm font-medium mb-2 sm:mb-3 block">
             Valores Sugeridos
@@ -95,6 +98,7 @@ const AmountSelection: React.FC<AmountSelectionProps> = ({
             ))}
           </div>
         </div>
+        )}
 
         {/* Resumo de Pagamento */}
         {finalAmount > 0 && (
