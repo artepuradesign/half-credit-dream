@@ -59,7 +59,7 @@ export const useApiAccessLogs = () => {
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${sessionToken}`,
-          'X-API-Key': 'sk_live_4c4d67c3b8f2e1a9d7f6e5c2b1a0987654321'
+          'X-API-Key': import.meta.env.VITE_API_KEY ?? ''
         },
         body: JSON.stringify({
           page: page,
@@ -110,7 +110,7 @@ export const useApiAccessLogs = () => {
       const response = await fetch('https://api.artepuradesign.com.br/access-logs', {
         headers: {
           'Authorization': `Bearer ${sessionToken}`,
-          'X-API-Key': 'sk_live_4c4d67c3b8f2e1a9d7f6e5c2b1a0987654321'
+          'X-API-Key': import.meta.env.VITE_API_KEY ?? ''
         }
       });
 
