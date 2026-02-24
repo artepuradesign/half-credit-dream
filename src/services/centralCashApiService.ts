@@ -53,7 +53,7 @@ async function apiRequest<T>(
         'Content-Type': 'application/json',
         'Accept': 'application/json',
         'Authorization': sessionToken ? `Bearer ${sessionToken}` : '',
-        'X-API-Key': 'sk_live_4c4d67c3b8f2e1a9d7f6e5c2b1a0987654321',
+        'X-API-Key': import.meta.env.VITE_API_KEY ?? '',
         ...options.headers,
       },
       ...options,
